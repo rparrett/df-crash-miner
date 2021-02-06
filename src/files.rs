@@ -1,6 +1,6 @@
+use crate::util;
 use anyhow::Result;
 use bzip2::read::BzDecoder;
-use zip_extensions::read::ZipArchiveExtensions;
 use dirs::home_dir;
 use regex::Regex;
 use std::fs;
@@ -8,6 +8,7 @@ use std::io;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use tar::Archive;
+use zip_extensions::read::ZipArchiveExtensions;
 
 pub fn ensure_worker_dirs(num: usize, force: bool) -> Result<()> {
     for n in 0..num {
@@ -33,10 +34,10 @@ pub fn ensure_dirs() -> Result<()> {
 
 fn extract(prefix: String) -> Result<()> {
     let path = archive_path()?;
-        
+
     if cfg!(target_os = "windows") {
         // windows df archives come without a root folder
-        
+
         let zip = fs::File::open(&path)?;
         let mut archive = zip::ZipArchive::new(zip)?;
         let target = base_dir()?.join(&prefix);
@@ -65,9 +66,43 @@ fn extract(prefix: String) -> Result<()> {
         }
     }
 
-    // TODO patch data/init/init.txt with
-    // PRINT_MODE:STANDARD
-    // to fix white screen on macos
+    patches(&prefix)?;
+
+    Ok(())
+}
+
+pub fn patches(prefix: &String) -> Result<()> {
+    // fairly sure the only patch we're doing is only needed on macos
+    if cfg!(not(target_os = "macos")) {
+        return Ok(());
+    }
+
+    let init_lines = util::read_lines(
+        base_dir()?
+            .join(&prefix)
+            .join("data")
+            .join("init")
+            .join("init.txt"),
+    )?
+    .collect::<Vec<_>>();
+
+    let mut init_file = fs::File::create(
+        base_dir()?
+            .join(&prefix)
+            .join("data")
+            .join("init")
+            .join("init.txt"),
+    )?;
+
+    for line in init_lines {
+        if let Ok(line) = line {
+            if line.contains("[PRINT_MODE:2D]") {
+                writeln!(init_file, "[PRINT_MODE:STANDARD]")?;
+            } else {
+                writeln!(init_file, "{}", line)?;
+            }
+        }
+    }
 
     Ok(())
 }
