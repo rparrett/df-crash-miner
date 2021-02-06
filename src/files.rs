@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bzip2::read::BzDecoder;
+use zip_extensions::read::ZipArchiveExtensions;
 use dirs::home_dir;
 use regex::Regex;
 use std::fs;
@@ -10,7 +11,7 @@ use tar::Archive;
 
 pub fn ensure_worker_dirs(num: usize, force: bool) -> Result<()> {
     for n in 0..num {
-        let dir = PathBuf::from(base_dir()?);
+        let dir = PathBuf::from(base_dir()?.join(format!("{}", n)));
         if !dir.is_dir() || force {
             extract(format!("{}", n))?;
         }
@@ -32,33 +33,41 @@ pub fn ensure_dirs() -> Result<()> {
 
 fn extract(prefix: String) -> Result<()> {
     let path = archive_path()?;
-
-    // TODO windows files come in a .zip without a root dir?
+        
     if cfg!(target_os = "windows") {
-        unimplemented!()
-    }
-
-    let tar_bz = fs::File::open(&path)?;
-    let tar = BzDecoder::new(tar_bz);
-    let mut archive = Archive::new(tar);
-
-    // df archives contain a root folder that we want to rename
-    let old_prefix = if cfg!(target_os = "macos") {
-        "df_osx"
-    } else if cfg!(target_os = "linux") {
-        "df_linux"
+        // windows df archives come without a root folder
+        
+        let zip = fs::File::open(&path)?;
+        let mut archive = zip::ZipArchive::new(zip)?;
+        let target = base_dir()?.join(&prefix);
+        archive.extract(&target)?;
     } else {
-        panic!()
-    };
+        let tar_bz = fs::File::open(&path)?;
+        let tar = BzDecoder::new(tar_bz);
+        let mut archive = Archive::new(tar);
 
-    for entry in archive.entries()? {
-        let mut file = entry?;
+        // macos/linux df archives contain a root folder that we want to rename
+        let old_prefix = if cfg!(target_os = "macos") {
+            "df_osx"
+        } else if cfg!(target_os = "linux") {
+            "df_linux"
+        } else {
+            panic!()
+        };
 
-        let mut path = base_dir()?;
-        path.push(prefix.as_str());
-        path.push(file.path()?.strip_prefix(old_prefix)?.to_owned());
-        file.unpack(&path)?;
+        for entry in archive.entries()? {
+            let mut file = entry?;
+
+            let mut path = base_dir()?;
+            path.push(prefix.as_str());
+            path.push(file.path()?.strip_prefix(old_prefix)?.to_owned());
+            file.unpack(&path)?;
+        }
     }
+
+    // TODO patch data/init/init.txt with
+    // PRINT_MODE:STANDARD
+    // to fix white screen on macos
 
     Ok(())
 }
