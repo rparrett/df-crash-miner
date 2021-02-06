@@ -33,13 +33,23 @@ pub fn ensure_dirs() -> Result<()> {
 fn extract(prefix: String) -> Result<()> {
     let path = archive_path()?;
 
+    // TODO windows files come in a .zip without a root dir?
+    if cfg!(target_os = "windows") {
+        unimplemented!()
+    }
+
     let tar_bz = fs::File::open(&path)?;
     let tar = BzDecoder::new(tar_bz);
     let mut archive = Archive::new(tar);
 
     // df archives contain a root folder that we want to rename
-    // TODO other platforms
-    let old_prefix = "df_osx";
+    let old_prefix = if cfg!(target_os = "macos") {
+        "df_osx"
+    } else if cfg!(target_os = "linux") {
+        "df_linux"
+    } else {
+        panic!()
+    };
 
     for entry in archive.entries()? {
         let mut file = entry?;
