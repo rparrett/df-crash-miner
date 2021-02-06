@@ -15,12 +15,14 @@ mod util;
 async fn main() -> Result<()> {
     ensure_dirs()?;
 
-    let latest = get_latest(false).await?;
+    let _ = get_latest(false).await?;
 
-    ensure_worker_dirs(8, false)?;
+    let concurrency = 4;
+
+    ensure_worker_dirs(concurrency, false)?;
 
     let mut handles = vec![];
-    for n in 0..4 {
+    for n in 0..concurrency {
         handles.push(tokio::spawn(async move {
             loop {
                 let f = gen_world(format!("{}", n), "long_history_pocket.txt".to_string());

@@ -90,7 +90,8 @@ pub fn get_gen_results(worker: &String) -> Result<WorldGenResults> {
     } else if gamelog.contains(&"aborted") {
         WorldGenResult::Abort
     } else {
-        log_crash(worker, &seeds);
+        log_crash(worker, &seeds)?;
+
         WorldGenResult::Crash
     };
 
@@ -146,6 +147,8 @@ pub async fn gen_world(worker: String, template: String) -> Result<()> {
             .join("init")
             .join("world_gen.txt"),
     )?;
+
+    // TODO command is different on windows
 
     let _ = Command::new(base_dir()?.join(&worker).join("df"))
         .current_dir(base_dir()?.join(&worker))
