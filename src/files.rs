@@ -8,10 +8,24 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use tar::Archive;
 
-pub fn ensure_worker_dirs(num: usize) -> Result<()> {
+pub fn ensure_worker_dirs(num: usize, force: bool) -> Result<()> {
     for n in 0..num {
-        extract(format!("{}", n))?;
+        let dir = PathBuf::from(base_dir()?);
+        if !dir.is_dir() || force {
+            extract(format!("{}", n))?;
+        }
     }
+
+    Ok(())
+}
+
+pub fn ensure_dirs() -> Result<()> {
+    // TODO the most likely error is that these directories already
+    // exist, which is okay to ignore. But we should not be ignoring
+    // other errors.
+
+    let _ = fs::create_dir_all(base_dir()?.join("templates"));
+    let _ = fs::create_dir_all(base_dir()?.join("crashes"));
 
     Ok(())
 }
@@ -98,8 +112,6 @@ async fn download_latest(archive: &Path) -> Result<()> {
     let cap = cap.unwrap();
 
     let url = ["http://www.bay12games.com/dwarves/", &cap[0]].concat();
-
-    println!("{:?}", url);
 
     let response = reqwest::get(&url).await?;
 
