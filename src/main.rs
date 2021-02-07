@@ -38,7 +38,11 @@ enum Command {
         #[structopt(short, long, parse(from_os_str))]
         params: PathBuf,
     },
-    Repro,
+    Repro {
+        /// Number of times to re-run each world gen
+        #[structopt(short, long, default_value = "4")]
+        num: usize,
+    },
 }
 
 #[tokio::main]
@@ -89,14 +93,7 @@ async fn main() -> Result<()> {
 
             futures::future::join_all(handles).await;
         }
-        Command::Repro => {
-            // Load up a list of crash param files
-            // Feed them to some workers
-            // Ensure that each crash param file is attempted (n, opt) times
-            // Save those statistics somewhere
-
-            let num_repros = 4;
-
+        Command::Repro { num } => {
             let paths: Vec<_> = glob(
                 files::base_dir()?
                     .join("crashes")
@@ -107,10 +104,10 @@ async fn main() -> Result<()> {
             .filter_map(Result::ok)
             .collect();
 
-            let queue = ArrayQueue::new(paths.len() * num_repros);
+            let queue = ArrayQueue::new(paths.len() * num);
 
             for path in paths {
-                for _ in 0..num_repros {
+                for _ in 0..num {
                     let _ = queue.push(path.clone()).unwrap();
                 }
             }
