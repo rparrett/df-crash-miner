@@ -6,6 +6,7 @@ use glob::glob;
 use regex::Regex;
 use std::fs;
 use std::io::prelude::*;
+use std::path::PathBuf;
 use tokio::process::Command;
 
 #[derive(Debug)]
@@ -136,7 +137,7 @@ pub fn log_crash(worker: &String, seeds: &WorldGenSeeds) -> Result<()> {
     Ok(())
 }
 
-pub async fn gen_world(worker: String, template: String) -> Result<()> {
+pub async fn gen_world(worker: String, template: &PathBuf) -> Result<()> {
     cleanup(&worker)?;
 
     fs::copy(

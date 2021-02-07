@@ -1,6 +1,7 @@
 use crate::files::*;
 use crate::gen::*;
 use anyhow::Result;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[macro_use]
@@ -15,8 +16,21 @@ mod util;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Dwarf Fortress Crash Miner")]
 struct Opt {
+    /// Number of world gens to run simultaneously
     #[structopt(short, long, default_value = "4")]
     concurrency: usize,
+    #[structopt(subcommand)]
+    cmd: Command,
+}
+
+#[derive(StructOpt, Debug)]
+enum Command {
+    Crash {
+        /// World gen params file
+        #[structopt(short, long, parse(from_os_str))]
+        params: PathBuf,
+    },
+    Repro,
 }
 
 #[tokio::main]
@@ -29,22 +43,31 @@ async fn main() -> Result<()> {
 
     ensure_worker_dirs(opt.concurrency, false)?;
 
-    let mut handles = vec![];
-    for n in 0..opt.concurrency {
-        handles.push(tokio::spawn(async move {
-            loop {
-                let f = gen_world(format!("{}", n), "long_history_pocket.txt".to_string());
-                tokio::select! {
-                    res = f => {
-                        println!("{:?}", res);
-                    }
-                    _ = tokio::signal::ctrl_c() => { println!("ctrlc!"); break }
-                }
-            }
-        }));
-    }
+    match opt.cmd {
+        Command::Crash { params } => {
+            let mut handles = vec![];
+            for n in 0..opt.concurrency {
+                let params = params.clone();
 
-    futures::future::join_all(handles).await;
+                handles.push(tokio::spawn(async move {
+                    loop {
+                        let f = gen_world(format!("{}", n), &params);
+                        tokio::select! {
+                            res = f => {
+                                println!("{:?}", res);
+                            }
+                            _ = tokio::signal::ctrl_c() => { println!("ctrlc!"); break }
+                        }
+                    }
+                }));
+            }
+
+            futures::future::join_all(handles).await;
+        }
+        Command::Repro => {
+            unimplemented!();
+        }
+    }
 
     Ok(())
 }
