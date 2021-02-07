@@ -4,6 +4,7 @@ use anyhow::Result;
 use chrono::Utc;
 use glob::glob;
 use regex::Regex;
+use std::fmt;
 use std::fs;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -11,8 +12,8 @@ use tokio::process::Command;
 
 #[derive(Debug)]
 pub struct WorldGenResults {
-    result: WorldGenResult,
-    seeds: WorldGenSeeds,
+    pub result: WorldGenResult,
+    pub seeds: WorldGenSeeds,
 }
 
 #[derive(Debug)]
@@ -22,12 +23,26 @@ pub enum WorldGenResult {
     Success,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WorldGenSeeds {
     seed: String,
     history_seed: String,
     name_seed: String,
     creature_seed: String,
+}
+
+impl fmt::Display for WorldGenResults {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:?} [{} / {} / {} / {}]",
+            self.result,
+            self.seeds.seed,
+            self.seeds.history_seed,
+            self.seeds.name_seed,
+            self.seeds.creature_seed
+        )
+    }
 }
 
 lazy_static! {
@@ -91,8 +106,6 @@ pub fn get_gen_results(worker: &String) -> Result<WorldGenResults> {
     } else if gamelog.contains(&"aborted") {
         WorldGenResult::Abort
     } else {
-        log_crash(worker, &seeds)?;
-
         WorldGenResult::Crash
     };
 
@@ -137,11 +150,15 @@ pub fn log_crash(worker: &String, seeds: &WorldGenSeeds) -> Result<()> {
     Ok(())
 }
 
-pub async fn gen_world(worker: String, template: &PathBuf) -> Result<()> {
+pub async fn gen_world(
+    worker: String,
+    params: &PathBuf,
+    log_crashes: bool,
+) -> Result<WorldGenResults> {
     cleanup(&worker)?;
 
     fs::copy(
-        base_dir()?.join("templates").join(template),
+        base_dir()?.join(params),
         base_dir()?
             .join(&worker)
             .join("data")
@@ -167,7 +184,14 @@ pub async fn gen_world(worker: String, template: &PathBuf) -> Result<()> {
 
     let res = get_gen_results(&worker);
 
-    println!("{:?}", res);
+    if log_crashes {
+        if let Ok(r) = &res {
+            match r.result {
+                WorldGenResult::Crash => log_crash(&worker, &r.seeds)?,
+                _ => {}
+            }
+        }
+    }
 
-    Ok(())
+    res
 }
