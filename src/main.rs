@@ -55,6 +55,13 @@ async fn main() -> Result<()> {
         Command::Crash { params } => {
             // TODO validate params before we go nuts here
 
+            if files::base_dir().map_or(false, |base| {
+                !base.join("templates").join(&params).is_file()
+            }) {
+                println!("Invalid params file.");
+                return Ok(());
+            }
+
             let mut handles = vec![];
             for n in 0..opt.concurrency {
                 let params = PathBuf::from("templates").join(&params);
