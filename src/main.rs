@@ -65,6 +65,10 @@ async fn main() -> Result<()> {
             futures::future::join_all(handles).await;
         }
         Command::Repro => {
+            // Load up a list of crash param files
+            // Feed them to some workers
+            // Ensure that each crash param file is attempted (n, opt) times
+            // Save those statistics somewhere
             unimplemented!();
         }
     }
