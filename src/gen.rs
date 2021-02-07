@@ -168,7 +168,13 @@ pub async fn gen_world(
 
     // TODO command is different on windows
 
-    let _ = Command::new(base_dir()?.join(&worker).join("df"))
+    let cmd = if cfg!(target_os = "windows") {
+        "Dwarf Fortress.exe"
+    } else {
+        "df"
+    };
+
+    let _ = Command::new(base_dir()?.join(&worker).join(cmd))
         .current_dir(base_dir()?.join(&worker))
         .arg("-gen")
         .arg("0")
