@@ -13,10 +13,10 @@ cd df-crash-miner
 cargo run --release crash --params=long_history_pocket.txt
 ```
 
-You should now be seeing complaints about an invalid params file. The program has set up another "df-crash-miner" directory in your user directory and is expecting to find that params file in there.
+You should now be seeing complaints about an invalid params file. The program has set up another `.df-crash-miner` directory in your user directory and is expecting to find that params file in there.
 
 ```
-cp df-crash-miner params/* ~/params/
+cp df-crash-miner params/* ~/.df-crash-miner/params/
 cargo run --release crash --params=long_history_pocket.txt
 ```
 

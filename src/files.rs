@@ -26,7 +26,7 @@ pub fn ensure_dirs() -> Result<()> {
     // exist, which is okay to ignore. But we should not be ignoring
     // other errors.
 
-    let _ = fs::create_dir_all(base_dir()?.join("templates"));
+    let _ = fs::create_dir_all(base_dir()?.join("params"));
     let _ = fs::create_dir_all(base_dir()?.join("crashes"));
 
     Ok(())
@@ -123,7 +123,7 @@ pub fn base_dir() -> Result<PathBuf> {
         bail!("couldn't get home dir");
     }
     let mut dir = dir.unwrap();
-    dir.push("df-crash-miner");
+    dir.push(".df-crash-miner");
     Ok(dir)
 }
 
