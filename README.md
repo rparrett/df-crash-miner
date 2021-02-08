@@ -44,7 +44,28 @@ This will run each set of crash seeds 10 times and report back how many times th
 ## Screenshots
 
 ```
- ~/src/df-crash-miner/ [main*] cargo run --release repro
+ ~/src/df-crash-miner/ [main] cargo run --release --help
+Dwarf Fortress Crash Miner 0.1.0
+
+USAGE:
+    df-crash-miner [OPTIONS] <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -c, --concurrency <concurrency>    Number of world gens to run simultaneously [default: 4]
+
+SUBCOMMANDS:
+    crash     Discover new crashes
+    help      Prints this message or the help of the given subcommand(s)
+    repro     Reproduce crashes with param files from the crashes directory
+    update    Download the latest version of Dwarf Fortress
+```
+
+```
+ ~/src/df-crash-miner/ [main] cargo run --release repro
 ╭──────────────────────────────────────────────────────────────────╮
 │ Params                                Crash   Success   Avg Time │
 ╞══════════════════════════════════════════════════════════════════╡
