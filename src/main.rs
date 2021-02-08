@@ -6,7 +6,6 @@ use comfy_table::presets::UTF8_BORDERS_ONLY;
 use comfy_table::Table;
 use crossbeam_queue::ArrayQueue;
 use dashmap::DashMap;
-use futures::{stream, StreamExt};
 use glob::glob;
 use std::path::PathBuf;
 use std::sync::Arc;

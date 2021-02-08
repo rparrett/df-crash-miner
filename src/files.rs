@@ -7,6 +7,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tar::Archive;
+#[cfg(target_os = "windows")]
 use zip_extensions::read::ZipArchiveExtensions;
 
 pub fn ensure_worker_dirs(num: usize, force: bool) -> Result<()> {
