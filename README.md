@@ -27,6 +27,8 @@ cargo run --release crash --params=long_history_pocket.txt
 
 Param files must have `[TITLE:CRASH]`, or you'll just see "default" medium-sized worlds being generated.
 
+Param files must not have `[SEED:]` and friends, or you'll just see the same worlds generated over and over.
+
 Eventually, crashes may occur and the program will save copies of this param file with the crash seeds to `~/.df-crash-miner`
 
 But these crashes may have been due to a cosmic ray bit flip or may be from a bug that's too intermittent to be useful for debugging.
