@@ -44,6 +44,9 @@ enum Command {
         /// Number of times to re-run each world gen
         #[structopt(short, long, default_value = "4")]
         num: usize,
+        /// Reproduce only crashes with filenames that contain this text
+        #[structopt(short, long)]
+        filter: Option<String>,
     },
     /// Download the latest version of Dwarf Fortress
     Update,
@@ -96,7 +99,7 @@ async fn main() -> Result<()> {
 
             futures::future::join_all(handles).await;
         }
-        Command::Repro { num } => {
+        Command::Repro { num, filter } => {
             ensure_worker_dirs(opt.concurrency, false)?;
 
             let paths: Vec<_> = glob(
@@ -107,6 +110,13 @@ async fn main() -> Result<()> {
                     .unwrap(),
             )?
             .filter_map(Result::ok)
+            .filter(|p| {
+                if let Some(f) = &filter {
+                    p.to_string_lossy().contains(f)
+                } else {
+                    true
+                }
+            })
             .collect();
 
             if paths.is_empty() {
