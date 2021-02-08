@@ -32,16 +32,20 @@ struct Opt {
 
 #[derive(StructOpt, Debug)]
 enum Command {
+    /// Discover new crashes
     Crash {
         /// World gen params file
         #[structopt(short, long, parse(from_os_str))]
         params: PathBuf,
     },
+    /// Reproduce crashes with param files from the crashes directory
     Repro {
         /// Number of times to re-run each world gen
         #[structopt(short, long, default_value = "4")]
         num: usize,
     },
+    /// Download the latest version of Dwarf Fortress
+    Update,
 }
 
 #[tokio::main]
@@ -50,13 +54,13 @@ async fn main() -> Result<()> {
 
     ensure_dirs()?;
 
-    let _ = get_latest(false).await?;
-
-    ensure_worker_dirs(opt.concurrency, false)?;
-
     match opt.cmd {
+        Command::Update => {
+            let _ = get_latest(false).await?;
+            ensure_worker_dirs(opt.concurrency, false)?;
+        }
         Command::Crash { params } => {
-            // TODO validate params before we go nuts here
+            ensure_worker_dirs(opt.concurrency, false)?;
 
             if files::base_dir().map_or(false, |base| !base.join("params").join(&params).is_file())
             {
@@ -92,6 +96,8 @@ async fn main() -> Result<()> {
             futures::future::join_all(handles).await;
         }
         Command::Repro { num } => {
+            ensure_worker_dirs(opt.concurrency, false)?;
+
             let paths: Vec<_> = glob(
                 files::base_dir()?
                     .join("crashes")

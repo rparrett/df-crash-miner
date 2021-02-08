@@ -1,5 +1,5 @@
 use crate::util;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use bzip2::read::BzDecoder;
 use dirs::home_dir;
 use regex::Regex;
@@ -22,29 +22,36 @@ pub fn ensure_worker_dirs(num: usize, force: bool) -> Result<()> {
 }
 
 pub fn ensure_dirs() -> Result<()> {
-    // TODO the most likely error is that these directories already
-    // exist, which is okay to ignore. But we should not be ignoring
-    // other errors.
+    let _ = fs::create_dir_all(base_dir()?.join("params"))
+        .or_else(|e| match e.kind() {
+            std::io::ErrorKind::AlreadyExists => Ok(()),
+            _ => Err(e),
+        })
+        .context("Creating data directories")?;
 
-    let _ = fs::create_dir_all(base_dir()?.join("params"));
-    let _ = fs::create_dir_all(base_dir()?.join("crashes"));
+    let _ = fs::create_dir_all(base_dir()?.join("crashes"))
+        .or_else(|e| match e.kind() {
+            std::io::ErrorKind::AlreadyExists => Ok(()),
+            _ => Err(e),
+        })
+        .context("Creating data directories")?;
 
     Ok(())
 }
 
 fn extract(prefix: String) -> Result<()> {
     let path = archive_path()?;
+    let file =
+        fs::File::open(&path).context("Dwarf Fortress not found. Run the update command.")?;
 
     if cfg!(target_os = "windows") {
         // windows df archives come without a root folder
 
-        let zip = fs::File::open(&path)?;
-        let mut archive = zip::ZipArchive::new(zip)?;
+        let mut archive = zip::ZipArchive::new(file)?;
         let target = base_dir()?.join(&prefix);
         archive.extract(&target)?;
     } else {
-        let tar_bz = fs::File::open(&path)?;
-        let tar = BzDecoder::new(tar_bz);
+        let tar = BzDecoder::new(file);
         let mut archive = Archive::new(tar);
 
         // macos/linux df archives contain a root folder that we want to rename

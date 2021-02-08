@@ -7,9 +7,14 @@ This is in a working state but there are some rough edges. At the moment I am no
 
 ## How
 
+You'll have to build it from source.
+
+First, [install rust](https://www.rust-lang.org/tools/install).
+
 ```
 git clone https://github.com/rparrett/df-crash-miner/
 cd df-crash-miner
+cargo run --release update
 cargo run --release crash --params=long_history_pocket.txt
 ```
 
