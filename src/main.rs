@@ -192,7 +192,7 @@ async fn main() -> Result<()> {
                     format!("{}", v.1),
                     format!(
                         "{}",
-                        humantime::format_duration(Duration::new(v.2.as_secs(), 0) / (v.0 + v.1))
+                        humantime::format_duration(Duration::new((v.2 / (v.0 + v.1)).as_secs(), 0))
                     ),
                 ]);
             }
