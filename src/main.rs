@@ -189,10 +189,14 @@ async fn main() -> Result<()> {
                     format!("{}", k.file_name().unwrap().to_string_lossy()),
                     format!("{}", v.0),
                     format!("{}", v.1),
-                    format!(
-                        "{}",
-                        humantime::format_duration(Duration::new((v.2 / v.0).as_secs(), 0))
-                    ),
+                    if v.0 > 0 {
+                        format!(
+                            "{}",
+                            humantime::format_duration(Duration::new((v.2 / v.0).as_secs(), 0))
+                        )
+                    } else {
+                        "?".to_string()
+                    },
                 ]);
             }
 
