@@ -33,3 +33,16 @@ cargo run --release repro --num 10
 ```
 
 This will run each set of crash seeds 10 times and report back how many times they actually crashed.
+
+## Screenshots
+
+```
+╭───────────────────────────────────────────────────────╮
+│ Params                                Crash   Success │
+╞═══════════════════════════════════════════════════════╡
+│ macos-20210208-002253-827591000.txt   10      0       │
+│ macos-20210208-001000-795054000.txt   10      0       │
+│ macos-20210208-002237-713855000.txt   10      0       │
+│ macos-20210208-001635-776530000.txt   10      0       │
+╰───────────────────────────────────────────────────────╯
+```
