@@ -9,6 +9,7 @@ use dashmap::DashMap;
 use glob::glob;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
 #[macro_use]
@@ -122,7 +123,7 @@ async fn main() -> Result<()> {
 
             let queue_arc = Arc::new(queue);
 
-            let repro_stats = Arc::new(DashMap::<PathBuf, (u32, u32)>::new());
+            let repro_stats = Arc::new(DashMap::<PathBuf, (u32, u32, Duration)>::new());
 
             let mut handles = vec![];
             for n in 0..opt.concurrency {
@@ -137,21 +138,27 @@ async fn main() -> Result<()> {
                             None => break,
                         };
 
+                        let started = Instant::now();
+
                         let f = gen_world(format!("{}", n), &param, false);
 
                         tokio::select! {
                             res = f => {
                                 match res {
                                     Ok(r) => {
+                                        let finished = Instant::now();
+
                                         println!("{}", r);
                                         match r.result {
                                             WorldGenResult::Crash => {
-                                                let mut e = repro_stats_ours.entry(param).or_insert((0, 0));
-                                                (*e).0 += 1
+                                                let mut e = repro_stats_ours.entry(param).or_insert((0, 0, Duration::new(0, 0)));
+                                                (*e).0 += 1;
+                                                (*e).2 += finished - started;
                                             },
                                             WorldGenResult::Success => {
-                                                let mut e = repro_stats_ours.entry(param).or_insert((0, 0));
-                                                (*e).1 += 1
+                                                let mut e = repro_stats_ours.entry(param).or_insert((0, 0, Duration::new(0, 0)));
+                                                (*e).1 += 1;
+                                                (*e).2 += finished - started;
                                             },
                                             _ => {}
 
@@ -173,7 +180,7 @@ async fn main() -> Result<()> {
             futures::future::join_all(handles).await;
 
             let mut table = Table::new();
-            table.set_header(vec!["Params", "Crash", "Success"]);
+            table.set_header(vec!["Params", "Crash", "Success", "Avg Time"]);
             table.load_preset(UTF8_BORDERS_ONLY);
             table.apply_modifier(UTF8_ROUND_CORNERS);
 
@@ -183,6 +190,10 @@ async fn main() -> Result<()> {
                     format!("{}", k.file_name().unwrap().to_string_lossy()),
                     format!("{}", v.0),
                     format!("{}", v.1),
+                    format!(
+                        "{}",
+                        humantime::format_duration(Duration::new(v.2.as_secs(), 0) / (v.0 + v.1))
+                    ),
                 ]);
             }
 
