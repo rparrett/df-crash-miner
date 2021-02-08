@@ -18,7 +18,7 @@ cargo run --release update
 cargo run --release crash --params=long_history_pocket.txt
 ```
 
-You should now be seeing complaints about an invalid params file. The program has set up another `.df-crash-miner` directory in your user directory and is expecting to find that params file in there.
+You should now be seeing complaints about an invalid params file. The program has set up another `.df-crash-miner` directory in your user directory and is expecting to find that params file in there. There's an example in this repo that you can copy over.
 
 ```
 cp df-crash-miner params/* ~/.df-crash-miner/params/
@@ -27,9 +27,9 @@ cargo run --release crash --params=long_history_pocket.txt
 
 Param files must have `[TITLE:CRASH]`, or you'll just see "default" medium-sized worlds being generated.
 
-Eventually, crashes may occur and the program will save copies of this param file with the crash seeds to `~/df-crash-miner`
+Eventually, crashes may occur and the program will save copies of this param file with the crash seeds to `~/.df-crash-miner`
 
-But these crashes may have been due to a cosmic ray bit flip or may be from a big that's too intermittent to be useful for debugging.
+But these crashes may have been due to a cosmic ray bit flip or may be from a bug that's too intermittent to be useful for debugging.
 
 So it's a good idea to re-run the world gen to see how often it crashes with the same seeds.
 
