@@ -108,6 +108,10 @@ async fn main() -> Result<()> {
             .filter_map(Result::ok)
             .collect();
 
+            if paths.is_empty() {
+                bail!("No crashes in the crashes directory.")
+            }
+
             let queue = ArrayQueue::new(paths.len() * num);
 
             for path in paths {
