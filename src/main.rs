@@ -158,7 +158,6 @@ async fn main() -> Result<()> {
                                             WorldGenResult::Success => {
                                                 let mut e = repro_stats_ours.entry(param).or_insert((0, 0, Duration::new(0, 0)));
                                                 (*e).1 += 1;
-                                                (*e).2 += finished - started;
                                             },
                                             _ => {}
 
@@ -192,7 +191,7 @@ async fn main() -> Result<()> {
                     format!("{}", v.1),
                     format!(
                         "{}",
-                        humantime::format_duration(Duration::new((v.2 / (v.0 + v.1)).as_secs(), 0))
+                        humantime::format_duration(Duration::new((v.2 / v.0).as_secs(), 0))
                     ),
                 ]);
             }
